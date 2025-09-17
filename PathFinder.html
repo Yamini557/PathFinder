@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Path Finder</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- TailwindCSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --brand:#6d28d9; /* purple-700 */
+      --brand-2:#0ea5e9; /* sky-500 */
+      --brand-3:#22c55e; /* green-500 */
+    }
+    body { font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji"; }
+    /* Smooth cards + subtle glass */
+    .card { backdrop-filter: blur(8px); }
+    /* Simple fade */
+    .fade-enter { opacity: 0; transform: translateY(6px); }
+    .fade-enter-active { opacity: 1; transform: translateY(0); transition: all .25s ease; }
+    .chip-selected { box-shadow: 0 0 0 2px rgba(99,102,241,.3) inset; }
+    /* Chatbot */
+    .chat-float { position: fixed; right: 1rem; bottom: 1rem; z-index: 50; }
+    .chat-window { width: 320px; max-height: 70vh; }
+    /* Prevent content flash on selective updates */
+    [data-hide="true"]{ display:none; }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-900 via-violet-900 to-sky-900 text-slate-100 selection:bg-violet-400 selection:text-slate-900">
+  <!-- NAV -->
+  <header class="sticky top-0 z-40">
+    <div class="backdrop-blur supports-backdrop-blur:bg-white/10 bg-white/5 border-b border-white/10">
+      <div class="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-sky-500 grid place-items-center shadow-lg">
+            <svg width="18" height="18" viewBox="0 0 24 24" class="text-white">
+              <path fill="currentColor" d="M12 2a1 1 0 0 1 .894.553l2.382 4.764l5.259.764a1 1 0 0 1 .554 1.705l-3.804 3.705l.898 5.234a1 1 0 0 1-1.451 1.054L12 17.77l-4.682 2.46a1 1 0 0 1-1.451-1.054l.898-5.234L2.96 9.786a1 1 0 0 1 .554-1.705l5.259-.764L11.106 2.553A1 1 0 0 1 12 2Z"/>
+            </svg>
+          </div>
+          <div>
+            <div class="text-xl font-extrabold tracking-tight">Path Finder</div>
+            <div class="text-xs text-slate-300/80">Discover your best-fit careers</div>
+          </div>
+        </div>
+        <nav class="flex items-center gap-2">
+          <button id="navHome" class="px-3 py-2 rounded-lg text-sm hover:bg-white/10">Home</button>
+          <button id="navProfile" class="px-3 py-2 rounded-lg text-sm hover:bg-white/10">Profile</button>
+          <button id="btnLogout" class="ml-2 px-3 py-2 rounded-lg text-sm bg-rose-500 hover:bg-rose-600 text-white shadow">Logout</button>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="mx-auto max-w-6xl px-4 py-8 space-y-8">
+    <!-- HERO -->
+    <section class="rounded-2xl p-8 bg-gradient-to-br from-white/10 to-white/5 border border-white/10 card">
+      <div class="grid lg:grid-cols-2 gap-8 items-center">
+        <div>
+          <h1 class="text-3xl md:text-4xl font-extrabold leading-tight">
+            Find your path with clarity, confidence, and a plan
+          </h1>
+          <p class="mt-3 text-slate-200/90">
+            Enter your details, explore your interests with a quick test, and get tailored career paths with study plans, exams, timelines, and skills.
+          </p>
+          <div class="mt-6 flex gap-3">
+            <button id="getStarted" class="px-5 py-3 rounded-xl bg-violet-500 hover:bg-violet-600 shadow-lg shadow-violet-900/30 font-semibold">
+              Get started
+            </button>
+            <button id="btnTakeTest" class="px-5 py-3 rounded-xl bg-sky-500 hover:bg-sky-600 shadow-lg shadow-sky-900/30 font-semibold">
+              Take Interest Test
+            </button>
+          </div>
+          <p class="mt-4 text-xs text-slate-300/80">
+            Your info is stored only in your browser on this device.
+          </p>
+        </div>
+        <div class="relative">
+          <div class="absolute -inset-1 bg-gradient-to-r from-violet-600/30 to-sky-500/30 blur-2xl rounded-3xl"></div>
+          <div class="relative rounded-2xl p-6 bg-slate-900/60 border border-white/10">
+            <div class="grid grid-cols-2 gap-4">
+              <div class="rounded-xl p-4 bg-white/5 border border-white/10">
+                <div class="text-sm text-slate-300">Steps</div>
+                <div class="mt-2 font-bold text-xl">1 → 4</div>
+              </div>
+              <div class="rounded-xl p-4 bg-white/5 border border-white/10">
+                <div class="text-sm text-slate-300">Time</div>
+                <div class="mt-2 font-bold text-xl">~7 mins</div>
+              </div>
+              <div class="rounded-xl p-4 bg-white/5 border border-white/10 col-span-2">
+                <div class="text-sm text-slate-300">You’ll get</div>
+                <ul class="mt-2 text-sm space-y-1 text-slate-100">
+                  <li>• Interest insights</li>
+                  <li>• Career matches</li>
+                  <li>• Study and exam plan</li>
+                  <li>• Skills to build</li>
+                </ul>
+              </div>
+            </div>
+            <div class="mt-4 text-xs text-slate-300/80">No signup needed. Save to your Profile anytime.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MULTI-STEP: Basic Details -->
+    <section id="stepDetails" class="rounded-2xl p-6 md:p-8 bg-white/5 border border-white/10 card fade-enter" data-hide="true">
+      <div class="flex items-center justify-between">
+        <h2 class="text-2xl font-bold">Step 1 · Basic Details</h2>
+        <div class="text-sm text-slate-300/80">All fields help personalize your results</div>
+      </div>
+      <form id="formDetails" class="mt-6 grid md:grid-cols-2 gap-5">
+        <div>
+          <label class="block text-sm text-slate-300 mb-1">Full Name</label>
+          <input required id="name" class="w-full px-4 py-3 rounded-xl bg-slate-900/60 border border-white/10 focus:outline-none focus:ring-2 focus:ring-violet-500" placeholder="e.g., Aditi Sharma">
+        </div>
+        <div>
+          <label class="block text-sm text-slate-300 mb-1">Email</label>
+          <input required id="email" type="email" class="w-full px-4 py-3 rounded-xl bg-slate-900/60 border border-white/10 focus:outline-none focus:ring-2 focus:ring-violet-500" placeholder="e.g., aditi@example.com">
+        </div>
+        <div>
+          <label class="block text-sm text-slate-300 mb-1">Studying</label>
+          <input required id="studying" class="w-full px-4 py-3 rounded-xl bg-slate-900/60 border border-white/10 focus:outline-none focus:ring-2 focus:ring-violet-500" placeholder="e.g., Class 11 Science">
+        </div>
+        <div>
+          <label class="block text-sm text-slate-300 mb-1">Hobbies</label>
+          <input id="hobbies" class="w-full px-4 py-3 rounded-xl bg-slate-900/60 border border-white/10 focus:outline-none focus:ring-2 focus:ring-violet-500" placeholder="e.g., painting, coding, chess">
+        </div>
+        <div>
+          <label class="block text-sm text-slate-300 mb-1">Age</label>
+          <input required id="age" type="number" min="10" max="80" class="w-full px-4 py-3 rounded-xl bg-slate-900/60 border border-white/10 focus:outline-none focus:ring-2 focus:ring-violet-500" placeholder="e.g., 17">
+        </div>
+        <div>
+          <label class="block text-sm text-slate-300 mb-1">Gender</label>
+          <select id="gender" class="w-full px-4 py-3 rounded-xl bg-slate-900/60 border border-white/10 focus:outline-none focus:ring-2 focus:ring-violet-500">
+            <option value="">Prefer not to say</option>
+            <option>Female</option>
+            <option>Male</option>
+            <option>Non-binary</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="md:col-span-2 flex items-center justify-between pt-2">
+          <div class="text-xs text-slate-300/70">Tip: You can save this to your Profile later.</div>
+          <div class="flex gap-3">
+            <button type="button" id="cancelDetails" class="px-4 py-2 rounded-lg hover:bg-white/10">Cancel</button>
+            <button type="submit" class="px-5 py-2.5 rounded-lg bg-violet-500 hover:bg-violet-600 shadow font-semibold">Continue</button>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <!-- Step 2: Interest Choice -->
+    <section id="stepInterestChoice" class="rounded-2xl p-6 md:p-8 bg-white/5 border border-white/10 card fade-enter" data-hide="true">
+      <h2 class="text-2xl font-bold">Step 2 · Interests</h2>
+      <p class="mt-1 text-slate-200/90">Do you already know your interests, or would you like to discover them with a quick test?</p>
+      <div class="mt-6 grid md:grid-cols-2 gap-5">
+        <div class="p-5 rounded-xl bg-slate-900/60 border border-white/10">
+          <h3 class="font-semibold">I know my interests</h3>
+          <p class="text-sm text-slate-300/80 mt-1">Tell us your interests and see career paths instantly.</p>
+          <button id="btnIknowInterests" class="mt-4 px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 font-semibold shadow">Enter interests</button>
+        </div>
+        <div class="p-5 rounded-xl bg-slate-900/60 border border-white/10">
+          <h3 class="font-semibold">Help me discover</h3>
+          <p class="text-sm text-slate-300/80 mt-1">Answer simple questions to identify your interests.</p>
+          <button id="btnDiscover" class="mt-4 px-4 py-2 rounded-lg bg-sky-500 hover:bg-sky-600 font-semibold shadow">Start the test</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 3A: Enter Interests -->
+    <section id="stepEnterInterests" class="rounded-2xl p-6 md:p-8 bg-white/5 border border-white/10 card fade-enter" data-hide="true">
+      <h2 class="text-2xl font-bold">Step 3 · Tell us your interests</h2>
+      <p class="mt-1 text-slate-200/90">Pick from the popular list or type your own. We’ll tailor careers for you.</p>
+      <div class="mt-5">
+        <div class="text-sm text-slate-300/80">Popular interests</div>
+        <div id="interestChips" class="mt-2 flex flex-wrap gap-2"></div>
+      </div>
+      <div class="mt-4">
+        <label class="block text-sm text-slate-300 mb-1">Add custom interest</label>
+        <div class="flex gap-2">
+          <input id="customInterest" class="flex-1 px-4 py-3 rounded-xl bg-slate-900/60 border border-white/10 focus:outline-none focus:ring-2 focus:ring-violet-500" placeholder="e.g., robotics, filmmaking">
+          <button id="addInterest" class="px-4 py-2 rounded-lg bg-violet-500 hover:bg-violet-600 font-semibold">Add</button>
+        </div>
+      </div>
+      <div class="mt-6 flex items-center justify-between">
+        <button id="backToChoice1" class="px-4 py-2 rounded-lg hover:bg-white/10">Back</button>
+        <button id="seePathsFromInterests" class="px-5 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 shadow font-semibold">Show my career paths</button>
+      </div>
+    </section>
+
+    <!-- Step 3B: Interest Test -->
+    <section id="stepTest" class="rounded-2xl p-6 md:p-8 bg-white/5 border border-white/10 card fade-enter" data-hide="true">
+      <h2 class="text-2xl font-bold">Step 3 · Quick Interest Test</h2>
+      <p class="mt-1 text-slate-200/90">Choose the option that best matches you. There are 20 short questions.</p>
+      <form id="formTest" class="mt-6 space-y-6 max-h-[60vh] overflow-auto pr-2">
+        <!-- Questions will be injected here -->
+      </form>
+      <div class="mt-6 flex items-center justify-between">
+        <button id="backToChoice2" class="px-4 py-2 rounded-lg hover:bg-white/10">Back</button>
+        <button id="submitTest" class="px-5 py-2.5 rounded-lg bg-sky-500 hover:bg-sky-600 shadow font-semibold">See my interests</button>
+      </div>
+    </section>
+
+    <!-- Step 4: Results -->
+    <section id="stepResults" class="rounded-2xl p-6 md:p-8 bg-white/5 border border-white/10 card fade-enter" data-hide="true">
+      <div class="flex items-center justify-between">
+        <h2 class="text-2xl font-bold">Step 4 · Your Results</h2>
+        <button id="saveToProfile" class="px-4 py-2 rounded-lg bg-violet-500 hover:bg-violet-600 font-semibold">Save to Profile</button>
+      </div>
+      <div id="interestSummary" class="mt-4 text-slate-200/90"></div>
+      <div class="mt-6">
+        <h3 class="font-semibold text-lg">Recommended career paths</h3>
+        <div id="careerGrid" class="mt-3 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Career cards -->
+        </div>
+      </div>
+      <div class="mt-6">
+        <button id="restartFlow" class="px-4 py-2 rounded-lg hover:bg-white/10">Restart</button>
+      </div>
+    </section>
+
+    <!-- Career Detail Modal -->
+    <div id="careerModal" class="fixed inset-0 bg-black/60 items-end sm:items-center justify-center p-4 hidden">
+      <div class="w-full max-w-2xl rounded-2xl bg-slate-900 border border-white/10 p-6 relative">
+        <button id="closeCareer" class="absolute right-3 top-3 p-2 rounded-lg hover:bg-white/10" aria-label="Close">
+          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M18.3 5.71L12 12l6.3 6.29l-1.41 1.42L10.59 13.4l-6.3 6.3L2.88 18.3l6.29-6.3l-6.3-6.29L4.7 4.29L11 10.59l6.29-6.3z"/></svg>
+        </button>
+        <div id="careerDetail">
+          <!-- Filled dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Profile Page -->
+    <section id="profilePage" class="rounded-2xl p-6 md:p-8 bg-white/5 border border-white/10 card fade-enter" data-hide="true">
+      <div class="flex items-center justify-between">
+        <h2 class="text-2xl font-bold">Your Profile</h2>
+        <button id="clearProfile" class="px-4 py-2 rounded-lg bg-rose-500 hover:bg-rose-600 font-semibold">Clear All</button>
+      </div>
+      <div class="mt-6 grid lg:grid-cols-2 gap-6">
+        <div class="p-5 rounded-xl bg-slate-900/60 border border-white/10">
+          <h3 class="font-semibold">Basic details</h3>
+          <div id="profileDetails" class="mt-2 text-sm text-slate-200/90 space-y-1"></div>
+          <button id="editDetails" class="mt-3 px-4 py-2 rounded-lg bg-violet-500 hover:bg-violet-600 font-semibold">Edit details</button>
+        </div>
+        <div class="p-5 rounded-xl bg-slate-900/60 border border-white/10">
+          <h3 class="font-semibold">Saved interests</h3>
+          <div id="profileInterests" class="mt-2 flex flex-wrap gap-2"></div>
+        </div>
+        <div class="p-5 rounded-xl bg-slate-900/60 border border-white/10 lg:col-span-2">
+          <div class="flex items-center justify-between">
+            <h3 class="font-semibold">Saved career paths</h3>
+            <div class="text-xs text-slate-300/80">Click a card to view details</div>
+          </div>
+          <div id="profileCareers" class="mt-3 grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Chatbot (Demo) -->
+  <div class="chat-float">
+    <button id="chatToggle" class="rounded-full bg-gradient-to-br from-violet-500 to-sky-500 text-white w-14 h-14 grid place-items-center shadow-lg hover:brightness-110" aria-label="Open chatbot">
+      <svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M12 3C7.03 3 3 6.58 3 11c0 2.08.9 3.97 2.39 5.4c-.2.74-.69 2.54-.79 2.93c0 0-.02.14.07.2c.09.06.2.04.2.04c.26-.04 2.96-.97 3.43-1.14C9.62 18.93 10.78 19 12 19c4.97 0 9-3.58 9-8s-4.03-8-9-8"/></svg>
+    </button>
+    <div id="chatWindow" class="chat-window hidden mt-3 rounded-2xl overflow-hidden bg-slate-900 border border-white/10 shadow-2xl">
+      <div class="p-3 bg-white/10 flex items-center justify-between">
+        <div>
+          <div class="font-semibold">Path Finder Chat</div>
+          <div class="text-[10px] text-slate-300/80">AI Assistant (Demo)</div>
+        </div>
+        <button id="chatClose" class="p-2 rounded-lg hover:bg-white/10" aria-label="Close chat">
+          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M18.3 5.71L12 12l6.3 6.29l-1.41 1.42L10.59 13.4l-6.3 6.3L2.88 18.3l6.29-6.3l-6.3-6.29L4.7 4.29L11 10.59l6.29-6.3z"/></svg>
+        </button>
+      </div>
+      <div id="chatMessages" class="p-3 space-y-2 max-h-[46vh] overflow-auto">
+        <div class="text-xs text-slate-300/80">Hi! I’m here to help answer questions about careers, exams, and skills. This is a demo and works offline.</div>
+      </div>
+      <div class="p-3 border-t border-white/10">
+        <div class="flex gap-2">
+          <input id="chatInput" class="flex-1 px-3 py-2 rounded-lg bg-slate-800 border border-white/10 focus:outline-none focus:ring-2 focus:ring-violet-500" placeholder="Ask about exams, skills, timelines...">
+          <button id="chatSend" class="px-4 py-2 rounded-lg bg-violet-500 hover:bg-violet-600 font-semibold">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // App State
+    const $ = (sel) => document.querySelector(sel);
+    const $$ = (sel) => document.querySelectorAll(sel);
+
+    const state = {
+      user: { name:'', email:'', studying:'', hobbies:'', age:'', gender:'' },
+      selectedInterests: [],
+      testAnswers: {},
+      derivedInterests: [],
+      recommendations: [],
+      saved: { details: null, interests: [], careers: [] },
+      careersDB: {},
+      categories: ["Technology","Creative Arts","Healthcare","Business","Social Service","Research","Entrepreneurship","Environment","Education"]
+    };
+
+    // Popular interests
+    const popularInterests = [
+      "coding","app development","web design","AI & ML","data science","robotics",
+      "graphic design","animation","filmmaking","music","writing",
+      "medicine","psychology","pharmacy","nursing","fitness",
+      "finance","marketing","sales","operations","HR",
+      "teaching","counselling","public service","law","politics",
+      "biology","astronomy","physics","chemistry","mathematics",
+      "entrepreneurship","startups","product management",
+      "sustainability","environment","wildlife","geology","agriculture",
+      "UX/UI","cybersecurity","cloud computing","gaming","journalism"
+    ];
+
+    // Careers database: sample entries per category
+    const careersDB = {
+      "Technology": [
+        {
+          id:"tech_se",
+          title:"Software Engineer",
+          summary:"Build apps, systems, and platforms across industries.",
+          study:["B.Tech/BE in CSE/IT or B.Sc CS","Strong DSA, OOP, DBMS","Projects & internships"],
+          exams:["JEE (India) optional for top colleges","College entrance exams as applicable"],
+          timeline:"3–4 years undergraduate + ongoing learning",
+          skills:["Programming","Problem-solving","System design","Version control"],
+          link:"#"
+        },
+        {
+          id:"tech_ds",
+          title:"Data Scientist",
+          summary:"Turn data into insights and predictions.",
+          study:["B.Tech/BE, B.Sc, or B.Stat","Math/Stats + Python + ML","Portfolio with datasets"],
+          exams:["Entrance per university"],
+          timeline:"3–4 years UG + 6–12 months specialization",
+          skills:["Statistics","Python/R","ML","Data storytelling"],
+          link:"#"
+        }
+      ],
+      "Creative Arts":[
+        { id:"ca_ux", title:"UX/UI Designer", summary:"Design delightful digital experiences.",
+          study:["B.Des or self-taught via strong portfolio","Human-centered design","Design systems"],
+          exams:["Design school entrances (e.g., NID/UCEED)"],
+          timeline:"3–4 years UG or 6–12 months intensive",
+          skills:["Research","Wireframing","Prototyping","Visual design"] },
+        { id:"ca_anim", title:"Animator/3D Artist", summary:"Bring stories to life visually.",
+          study:["Animation/Multimedia degree or courses","Portfolio reels","Storyboarding"],
+          exams:["Art/design entrances if applicable"],
+          timeline:"1–4 years depending on path",
+          skills:["Motion","3D tools","Story","Timing"] }
+      ],
+      "Healthcare":[
+        { id:"hc_doctor", title:"Doctor (MBBS)", summary:"Diagnose and treat patients.",
+          study:["MBBS","Clinical rotations","PG specialization (optional)"],
+          exams:["NEET-UG (India)","University exams"],
+          timeline:"5.5 years MBBS + 2–3 years PG (optional)",
+          skills:["Biology","Empathy","Attention to detail","Stamina"] },
+        { id:"hc_pharm", title:"Pharmacist", summary:"Ensure safe and effective medications.",
+          study:["B.Pharm","Internship","Licensing as per region"],
+          exams:["Pharmacy-specific entrances as applicable"],
+          timeline:"4 years UG",
+          skills:["Chemistry","Accuracy","Regulatory knowledge"] }
+      ],
+      "Business":[
+        { id:"biz_mkt", title:"Marketing Specialist", summary:"Grow brands with strategy & content.",
+          study:["BBA/BMS/BA + marketing courses","Digital marketing tools","Case practice"],
+          exams:["BBA/BMS entrances, CAT for MBA (optional)"],
+          timeline:"3 years UG + 2 years MBA (optional)",
+          skills:["Communication","Creativity","Analytics","Social media"] },
+        { id:"biz_fin", title:"Financial Analyst", summary:"Evaluate investments & performance.",
+          study:["B.Com/BBA/BA Econ","CFA (optional)","Excel & BI tools"],
+          exams:["CFA (optional), university entrances"],
+          timeline:"3 years UG + certifications",
+          skills:["Accounting","Valuation","Modeling","Attention to detail"] }
+      ],
+      "Social Service":[
+        { id:"ss_psy", title:"Psychologist (Counselling)", summary:"Support mental well-being.",
+          study:["BA/BS Psychology","MA/MSc in Psychology","Supervised practice"],
+          exams:["University entrances as applicable"],
+          timeline:"3 years UG + 2 years PG",
+          skills:["Active listening","Empathy","Assessment","Ethics"] },
+        { id:"ss_social", title:"Social Worker", summary:"Help communities thrive.",
+          study:["BSW/MSW","Fieldwork","Policy understanding"],
+          exams:["University entrances as applicable"],
+          timeline:"3–5 years",
+          skills:["Advocacy","Communication","Cultural awareness"] }
+      ],
+      "Research":[
+        { id:"res_sci", title:"Scientific Researcher", summary:"Advance knowledge via experiments.",
+          study:["BSc + MSc","PhD for advanced roles","Papers & labs"],
+          exams:["CSIR-NET/GATE (India) for some tracks"],
+          timeline:"5–8+ years depending on path",
+          skills:["Methodology","Statistics","Writing","Curiosity"] },
+        { id:"res_ai", title:"AI Researcher", summary:"Invent new AI models & methods.",
+          study:["B.Tech/BSc + MSc/PhD","Math-heavy training","Publications"],
+          exams:["GATE/PG entrances as applicable"],
+          timeline:"6–10+ years",
+          skills:["Linear algebra","Optimization","ML/DL","Python"] }
+      ],
+      "Entrepreneurship":[
+        { id:"ent_founder", title:"Startup Founder", summary:"Build products and companies.",
+          study:["Any UG + self-learning","Incubators/accelerators","Mentorship"],
+          exams:["None required"],
+          timeline:"Highly variable",
+          skills:["Vision","Execution","Storytelling","Resilience"] },
+        { id:"ent_pm", title:"Product Manager", summary:"Guide products from idea to launch.",
+          study:["B.Tech/BBA/Any + PM courses","Case/product sense","Roadmapping"],
+          exams:["MBA entrances (optional)"],
+          timeline:"3–6 years experience + learning",
+          skills:["Prioritization","User empathy","Analytics","Leadership"] }
+      ],
+      "Environment":[
+        { id:"env_eng", title:"Environmental Engineer", summary:"Solve sustainability challenges.",
+          study:["BE/BTech Environmental/Civil","Field studies","Policy basics"],
+          exams:["Engineering entrances"],
+          timeline:"4 years UG",
+          skills:["Modeling","Impact assessment","GIS (optional)"] },
+        { id:"env_cons", title:"Sustainability Consultant", summary:"Advise orgs on ESG & impact.",
+          study:["Any UG + sustainability courses","Reporting frameworks","Stakeholder mgmt"],
+          exams:["None mandatory"],
+          timeline:"3–6 years experience + certs",
+          skills:["ESG standards","Analysis","Communication"] }
+      ],
+      "Education":[
+        { id:"edu_teacher", title:"Teacher", summary:"Inspire and teach students.",
+          study:["B.Ed after UG or relevant path","Subject mastery","Practicals"],
+          exams:["TET/CTET or region equivalent"],
+          timeline:"3–5 years depending on route",
+          skills:["Pedagogy","Communication","Patience"] },
+        { id:"edu_instr", title:"Instructional Designer", summary:"Create learning materials & courses.",
+          study:["Any UG + ID courses","Learning science","Authoring tools"],
+          exams:["None mandatory"],
+          timeline:"1–3 years experience + portfolio",
+          skills:["Curriculum design","Writing","Media"] }
+      ]
+    };
+    state.careersDB = careersDB;
+
+    // Utility: Show/Hide sections
+    function showSection(id) {
+      // hide all step/profile sections
+      ["stepDetails","stepInterestChoice","stepEnterInterests","stepTest","stepResults","profilePage"].forEach(sec=>{
+        const el = $("#"+sec);
+        if(!el) return;
+        el.setAttribute("data-hide","true");
+      });
+      const target = $("#"+id);
+      if(target){
+        target.setAttribute("data-hide","false");
+        // simple fade
+        target.classList.remove("fade-enter");
+        void target.offsetWidth;
+        target.classList.add("fade-enter");
+        setTimeout(()=>target.classList.add("fade-enter-active"),10);
+        setTimeout(()=>{ target.classList.remove("fade-enter","fade-enter-active"); },300);
+      }
+      window.scrollTo({top:0, behavior:"smooth"});
+    }
+
+    // Initialize chips
+    function renderInterestChips() {
+      const wrap = $("#interestChips");
+      wrap.innerHTML = "";
+      popularInterests.slice(0, 36).forEach((name, idx) => {
+        const btn = document.createElement("button");
+        btn.type="button";
+        btn.textContent = name;
+        btn.className = "px-3 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 border border-white/10 text-sm";
+        btn.addEventListener("click", ()=>{
+          const i = state.selectedInterests.indexOf(name);
+          if(i>=0){ state.selectedInterests.splice(i,1); btn.classList.remove("chip-selected","bg-violet-600/20","border-violet-400/30"); }
+          else { state.selectedInterests.push(name); btn.classList.add("chip-selected","bg-violet-600/20","border-violet-400/30"); }
+        });
+        wrap.appendChild(btn);
+      });
+    }
+
+    // Map interests to categories simple keywords
+    function mapInterestToCategories(interests){
+      const map = {
+        "Technology":["coding","app","web","AI","ML","data","robotics","cyber","cloud","gaming"],
+        "Creative Arts":["design","graphic","animation","film","music","writing","ux","ui","journalism"],
+        "Healthcare":["medicine","doctor","psychology","pharmacy","nursing","fitness","health"],
+        "Business":["finance","marketing","sales","operations","hr","business","management"],
+        "Social Service":["counselling","public","service","law","politics","community","social"],
+        "Research":["biology","astronomy","physics","chemistry","math","research","science"],
+        "Entrepreneurship":["startup","entrepreneur","product","founder"],
+        "Environment":["environment","sustainability","wildlife","geology","agri","agriculture"],
+        "Education":["teaching","teacher","education","training","instructor"]
+      };
+      const scores = {};
+      state.categories.forEach(c=>scores[c]=0);
+      const list = interests.map(s=>s.toLowerCase());
+      list.forEach(term=>{
+        for(const [cat,keys] of Object.entries(map)){
+          if(keys.some(k=> term.includes(k))) scores[cat]+=2;
+        }
+      });
+      return scores;
+    }
+
+    // Build recommendations from category scores
+    function recommendCareers(scores){
+      const topCats = Object.entries(scores).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([c])=>c);
+      const rec = [];
+      topCats.forEach(cat=>{
+        (state.careersDB[cat]||[]).forEach(c=>{ rec.push({...c, category:cat}); });
+      });
+      return { topCats, rec };
+    }
+
+    // Render results
+    function renderResults(from="interests"){
+      let summary = "";
+      if(from==="interests"){
+        summary = `Based on your interests, here are career paths you might love.`;
+      } else {
+        summary = `Based on your responses, your top interest areas are: <span class="font-semibold">${state.derivedInterests.slice(0,3).join(", ")}</span>.`;
+      }
+      $("#interestSummary").innerHTML = `<div class="p-4 rounded-xl bg-slate-900/60 border border-white/10">${summary}</div>`;
+      const grid = $("#careerGrid");
+      grid.innerHTML = "";
+      state.recommendations.forEach(card=>{
+        const el = document.createElement("button");
+        el.className = "text-left p-4 rounded-xl bg-slate-900/60 border border-white/10 hover:border-white/20 hover:bg-slate-800/60 transition shadow";
+        el.innerHTML = `
+          <div class="text-xs text-slate-300/80">${card.category}</div>
+          <div class="mt-1 font-semibold">${card.title}</div>
+          <div class="mt-2 text-sm text-slate-200/90 line-clamp-3">${card.summary}</div>
+          <div class="mt-3 text-xs text-emerald-300/90">Click to see study plan, exams, timeline, and skills</div>
+        `;
+        el.addEventListener("click", ()=>openCareer(card));
+        grid.appendChild(el);
+      });
+    }
+
+    // Career modal
+    function openCareer(career){
+      const wrap = $("#careerDetail");
+      wrap.innerHTML = `
+        <div class="flex items-start gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-sky-500 grid place-items-center">
+            <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a1 1 0 0 1 .99.86l.67 4.69l4.7.66a1 1 0 0 1 .55 1.71l-3.43 3.35l.81 4.75a1 1 0 0 1-1.48 1.05L12 17.77l-4.81 2.53a1 1 0 0 1-1.48-1.05l.81-4.75L3.09 9.92a1 1 0 0 1 .55-1.71l4.7-.66l.67-4.69A1 1 0 0 1 12 2Z"/></svg>
+          </div>
+          <div>
+            <div class="text-xs text-slate-300/80">${career.category}</div>
+            <h3 class="text-xl font-bold">${career.title}</h3>
+            <p class="mt-1 text-slate-200/90">${career.summary}</p>
+          </div>
+        </div>
+        <div class="mt-4 grid md:grid-cols-2 gap-4">
+          <div class="p-4 rounded-xl bg-white/5 border border-white/10">
+            <div class="font-semibold">What to study</div>
+            <ul class="mt-2 list-disc list-inside text-slate-200/90 text-sm">
+              ${career.study.map(s=>`<li>${s}</li>`).join("")}
+            </ul>
+          </div>
+          <div class="p-4 rounded-xl bg-white/5 border border-white/10">
+            <div class="font-semibold">Exams</div>
+            <ul class="mt-2 list-disc list-inside text-slate-200/90 text-sm">
+              ${career.exams.map(s=>`<li>${s}</li>`).join("")}
+            </ul>
+          </div>
+          <div class="p-4 rounded-xl bg-white/5 border border-white/10">
+            <div class="font-semibold">Timeline</div>
+            <div class="mt-2 text-slate-200/90 text-sm">${career.timeline}</div>
+          </div>
+          <div class="p-4 rounded-xl bg-white/5 border border-white/10">
+            <div class="font-semibold">Skills to develop</div>
+            <div class="mt-2 flex flex-wrap gap-2">
+              ${career.skills.map(s=>`<span class="px-2 py-1 rounded-full bg-slate-800 border border-white/10 text-xs">${s}</span>`).join("")}
+            </div>
+          </div>
+        </div>
+        <div class="mt-5 flex items-center justify-between">
+          <button id="saveCareer" class="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 font-semibold">Save to Profile</button>
+          <button id="closeCareer2" class="px-4 py-2 rounded-lg hover:bg-white/10">Close</button>
+        </div>
+      `;
+      $("#careerModal").classList.remove("hidden");
+      $("#saveCareer").onclick = ()=>{
+        // add if not exists
+        const exists = (state.saved.careers||[]).some(c=>c.id===career.id);
+        if(!exists){
+          state.saved.careers.push(career);
+          persist();
+          toast("Saved to Profile");
+          renderProfile();
+        } else {
+          toast("Already in Profile");
+        }
+      };
+      $("#closeCareer2").onclick = ()=> $("#careerModal").classList.add("hidden");
+    }
+    $("#closeCareer").addEventListener("click", ()=>$("#careerModal").classList.add("hidden"));
+    $("#careerModal").addEventListener("click", (e)=>{ if(e.target.id==="careerModal") $("#careerModal").classList.add("hidden"); });
+
+    // Build Test
+    const questions = [
+      "What activities make you feel happiest and most fulfilled?",
+      "What are your three biggest strengths?",
+      "What are the areas you want to improve in yourself?",
+      "Which subjects or topics do you enjoy learning about the most?",
+      "If you could choose any career without worrying about money or exams, what would it be?",
+      "What hobbies or interests do you wish could become your profession?",
+      "What excites you the most when you think about your future?",
+      "What kind of work or tasks drain your energy quickly?",
+      "What skills do you feel come naturally to you?",
+      "What skills do you want to develop further?",
+      "How do you usually solve problems when they arise?",
+      "Do you prefer working alone or with others, and why?",
+      "How do you usually make important decisions in your life?",
+      "What motivates you to give your best effort?",
+      "What do you value the most in life and in your future career?",
+      "What kind of impact do you want to create in society?",
+      "Where do you see yourself in 10 years?",
+      "Who inspires you the most, and why?",
+      "What kind of lifestyle do you imagine for yourself in the future?",
+      "What do you think success in a career truly means to you?"
+    ];
+
+    // Options per question mapped to categories
+    const optionsBank = [
+      [
+        ["Building apps or solving tech problems","Technology"],
+        ["Creating art, music, or designs","Creative Arts"],
+        ["Helping people feel better","Healthcare"],
+        ["Leading teams or projects","Business"],
+        ["Supporting communities","Social Service"]
+      ],
+      [
+        ["Logical thinking & coding","Technology"],
+        ["Visual creativity","Creative Arts"],
+        ["Empathy & listening","Healthcare"],
+        ["Planning & strategy","Business"],
+        ["Curiosity & research","Research"]
+      ],
+      [
+        ["Public speaking","Social Service"],
+        ["Advanced math","Research"],
+        ["Time management","Business"],
+        ["Drawing/visual skills","Creative Arts"],
+        ["Patience with details","Healthcare"]
+      ],
+      [
+        ["Computer science & AI","Technology"],
+        ["Design & storytelling","Creative Arts"],
+        ["Biology & psychology","Healthcare"],
+        ["Economics & marketing","Business"],
+        ["Physics & astronomy","Research"]
+      ],
+      [
+        ["Software developer","Technology"],
+        ["Filmmaker/designer","Creative Arts"],
+        ["Doctor/psychologist","Healthcare"],
+        ["CEO/entrepreneur","Entrepreneurship"],
+        ["Scientist/professor","Research"]
+      ],
+      [
+        ["Gaming/robotics","Technology"],
+        ["Photography/animation","Creative Arts"],
+        ["Fitness/wellness","Healthcare"],
+        ["Finance/marketing","Business"],
+        ["Teaching/tutoring","Education"]
+      ],
+      [
+        ["Creating new tech","Technology"],
+        ["Expressing creatively","Creative Arts"],
+        ["Improving health","Healthcare"],
+        ["Building companies","Entrepreneurship"],
+        ["Protecting nature","Environment"]
+      ],
+      [
+        ["Repetitive manual tasks","Technology"],
+        ["Strict rules with no creativity","Creative Arts"],
+        ["Cold calling/sales","Business"],
+        ["Crowded events","Social Service"],
+        ["Paperwork-heavy tasks","Environment"]
+      ],
+      [
+        ["Coding/analysis","Technology"],
+        ["Drawing/writing","Creative Arts"],
+        ["Caring/mentoring","Healthcare"],
+        ["Negotiation/planning","Business"],
+        ["Experiments/research","Research"]
+      ],
+      [
+        ["System design","Technology"],
+        ["Branding/visuals","Creative Arts"],
+        ["Therapy skills","Healthcare"],
+        ["Leadership","Business"],
+        ["Lab techniques","Research"]
+      ],
+      [
+        ["Break down and debug","Technology"],
+        ["Brainstorm and sketch","Creative Arts"],
+        ["Understand people’s needs","Social Service"],
+        ["Make a plan and delegate","Business"],
+        ["Form a hypothesis","Research"]
+      ],
+      [
+        ["Alone, deep focus","Technology"],
+        ["Small creative groups","Creative Arts"],
+        ["With people, collaborative","Social Service"],
+        ["Flexible teams","Business"],
+        ["Depends on the problem","Research"]
+      ],
+      [
+        ["Data-driven","Technology"],
+        ["Intuition & feel","Creative Arts"],
+        ["Consult with mentors","Education"],
+        ["Weigh pros/cons","Business"],
+        ["Gather evidence","Research"]
+      ],
+      [
+        ["Challenging problems","Technology"],
+        ["Creating beauty/impact","Creative Arts"],
+        ["Helping others","Social Service"],
+        ["Achieving goals","Business"],
+        ["Discovering new ideas","Research"]
+      ],
+      [
+        ["Growth & learning","Education"],
+        ["Creativity & freedom","Creative Arts"],
+        ["Helping society","Social Service"],
+        ["Stability & rewards","Business"],
+        ["Truth & knowledge","Research"]
+      ],
+      [
+        ["Better health access","Healthcare"],
+        ["Green planet","Environment"],
+        ["More education","Education"],
+        ["Tech for good","Technology"],
+        ["Stronger communities","Social Service"]
+      ],
+      [
+        ["Leading a product team","Entrepreneurship"],
+        ["Senior engineer/researcher","Technology"],
+        ["Renowned designer","Creative Arts"],
+        ["Doctor/therapist","Healthcare"],
+        ["Educator/professor","Education"]
+      ],
+      [
+        ["Innovators & builders","Technology"],
+        ["Artists & creators","Creative Arts"],
+        ["Humanitarians","Social Service"],
+        ["Leaders & founders","Entrepreneurship"],
+        ["Scientists","Research"]
+      ],
+      [
+        ["Flexible, remote work","Technology"],
+        ["Project-based creative","Creative Arts"],
+        ["Service-centered","Social Service"],
+        ["Corporate leadership","Business"],
+        ["Academic/research","Research"]
+      ],
+      [
+        ["Meaning + growth","Education"],
+        ["Creativity + impact","Creative Arts"],
+        ["Helping people","Social Service"],
+        ["Achievement & leadership","Business"],
+        ["Discovery & knowledge","Research"]
+      ]
+    ];
+
+    function buildTest(){
+      const form = $("#formTest");
+      form.innerHTML = "";
+      questions.forEach((q, idx)=>{
+        const wrap = document.createElement("div");
+        wrap.className = "p-4 rounded-xl bg-slate-900/60 border border-white/10";
+        const name = "q"+idx;
+        const opts = optionsBank[idx];
+        wrap.innerHTML = `
+          <div class="font-semibold">${idx+1}. ${q}</div>
+          <div class="mt-3 grid sm:grid-cols-2 gap-2" id="opts_${name}">
+            ${opts.map((o,i)=>`
+              <label class="flex items-start gap-2 p-2 rounded-lg bg-slate-800/80 border border-white/10 hover:bg-slate-800 cursor-pointer">
+                <input type="radio" name="${name}" value="${o[1]}" class="mt-1">
+                <span class="text-sm">${o[0]}</span>
+              </label>
+            `).join("")}
+          </div>
+        `;
+        form.appendChild(wrap);
+      });
+    }
+
+    // Derive scores from test answers
+    function deriveFromTest(){
+      const scores = {};
+      state.categories.forEach(c=>scores[c]=0);
+      Object.values(state.testAnswers).forEach(cat=>{
+        if(scores[cat]!==undefined) scores[cat]+=2;
+      });
+      const top = Object.entries(scores).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([c])=>c);
+      state.derivedInterests = top;
+      const rec = recommendCareers(scores);
+      state.recommendations = rec.rec;
+      return rec;
+    }
+
+    // Persist in localStorage
+    function persist(){
+      localStorage.setItem("pathfinder_saved", JSON.stringify(state.saved));
+    }
+    function loadPersist(){
+      const raw = localStorage.getItem("pathfinder_saved");
+      if(raw){
+        try { state.saved = JSON.parse(raw); }
+        catch(e){ state.saved = { details:null, interests:[], careers:[] }; }
+      }
+    }
+
+    // Profile rendering
+    function renderProfile(){
+      // details
+      const d = state.saved.details;
+      $("#profileDetails").innerHTML = d ? `
+        <div>Name: <span class="font-semibold">${d.name || "-"}</span></div>
+        <div>Email: <span class="font-semibold">${d.email || "-"}</span></div>
+        <div>Studying: <span class="font-semibold">${d.studying || "-"}</span></div>
+        <div>Hobbies: <span class="font-semibold">${d.hobbies || "-"}</span></div>
+        <div>Age: <span class="font-semibold">${d.age || "-"}</span></div>
+        <div>Gender: <span class="font-semibold">${d.gender || "-"}</span></div>
+      ` : `<div class="text-sm text-slate-300/80">No details saved yet.</div>`;
+
+      // interests
+      const wrap = $("#profileInterests");
+      wrap.innerHTML = "";
+      const interests = state.saved.interests || [];
+      if(interests.length===0){
+        wrap.innerHTML = `<div class="text-sm text-slate-300/80">No interests saved yet.</div>`;
+      } else {
+        interests.forEach(s=>{
+          const chip = document.createElement("span");
+          chip.className="px-3 py-1.5 rounded-full bg-slate-800 border border-white/10 text-sm";
+          chip.textContent = s;
+          wrap.appendChild(chip);
+        });
+      }
+
+      // careers
+      const grid = $("#profileCareers");
+      grid.innerHTML = "";
+      const list = state.saved.careers || [];
+      if(list.length===0){
+        grid.innerHTML = `<div class="text-sm text-slate-300/80">No careers saved yet.</div>`;
+      } else {
+        list.forEach(c=>{
+          const el = document.createElement("button");
+          el.className = "text-left p-4 rounded-xl bg-slate-900/60 border border-white/10 hover:border-white/20 hover:bg-slate-800/60 transition shadow";
+          el.innerHTML = `
+            <div class="text-xs text-slate-300/80">${c.category || "-"}</div>
+            <div class="mt-1 font-semibold">${c.title}</div>
+            <div class="mt-2 text-sm text-slate-200/90 line-clamp-3">${c.summary}</div>
+          `;
+          el.addEventListener("click", ()=>openCareer(c));
+          grid.appendChild(el);
+        });
+      }
+    }
+
+    // Toast
+    function toast(msg){
+      const t = document.createElement("div");
+      t.className = "fixed bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg bg-white/10 border border-white/10 backdrop-blur text-sm shadow";
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(()=>{ t.style.opacity="0"; t.style.transition="opacity .3s"; },1800);
+      setTimeout(()=> t.remove(),2200);
+    }
+
+    // Event wiring
+    $("#getStarted").addEventListener("click", ()=>{ showSection("stepDetails"); });
+    $("#btnTakeTest").addEventListener("click", ()=>{
+      showSection("stepDetails");
+      setTimeout(()=> showSection("stepInterestChoice"), 350);
+    });
+    $("#cancelDetails").addEventListener("click", ()=> showSection("stepDetails").setAttribute);
+    $("#navHome").addEventListener("click", ()=>{ showSection("stepDetails"); });
+    $("#navProfile").addEventListener("click", ()=>{ showSection("profilePage"); renderProfile(); });
+    $("#btnLogout").addEventListener("click", ()=>{
+      // Logout = clear data and return to start
+      state.user = { name:'', email:'', studying:'', hobbies:'', age:'', gender:'' };
+      state.selectedInterests = [];
+      state.testAnswers = {};
+      state.derivedInterests = [];
+      state.recommendations = [];
+      state.saved = { details:null, interests:[], careers:[] };
+      persist();
+      // reset forms
+      $("#formDetails").reset();
+      $("#formTest").reset?.();
+      toast("You are logged out. Local data cleared.");
+      window.location.reload();
+    });
+
+    // Details submit
+    $("#formDetails").addEventListener("submit", (e)=>{
+      e.preventDefault();
+      state.user.name = $("#name").value.trim();
+      state.user.email = $("#email").value.trim();
+      state.user.studying = $("#studying").value.trim();
+      state.user.hobbies = $("#hobbies").value.trim();
+      state.user.age = $("#age").value.trim();
+      state.user.gender = $("#gender").value;
+      showSection("stepInterestChoice");
+    });
+
+    // Choice
+    $("#btnIknowInterests").addEventListener("click", ()=>{ renderInterestChips(); showSection("stepEnterInterests"); });
+    $("#btnDiscover").addEventListener("click", ()=>{ buildTest(); showSection("stepTest"); });
+    $("#backToChoice1").addEventListener("click", ()=> showSection("stepInterestChoice"));
+    $("#backToChoice2").addEventListener("click", ()=> showSection("stepInterestChoice"));
+
+    // Enter interests
+    $("#addInterest").addEventListener("click", ()=>{
+      const v = $("#customInterest").value.trim();
+      if(!v) return;
+      state.selectedInterests.push(v);
+      $("#customInterest").value = "";
+      // show quick feedback
+      toast("Interest added");
+    });
+    $("#seePathsFromInterests").addEventListener("click", ()=>{
+      if(state.selectedInterests.length===0){
+        toast("Add or select at least one interest");
+        return;
+      }
+      // score from interests
+      const scores = mapInterestToCategories(state.selectedInterests);
+      const rec = recommendCareers(scores);
+      state.derivedInterests = rec.topCats;
+      state.recommendations = rec.rec;
+      renderResults("interests");
+      showSection("stepResults");
+    });
+
+    // Test
+    $("#submitTest").addEventListener("click", ()=>{
+      // collect answers
+      const total = questions.length;
+      state.testAnswers = {};
+      for(let i=0;i<total;i++){
+        const sel = document.querySelector(`input[name="q${i}"]:checked`);
+        if(!sel){ toast(`Please answer question ${i+1}`); return; }
+        state.testAnswers["q"+i] = sel.value;
+      }
+      deriveFromTest();
+      renderResults("test");
+      showSection("stepResults");
+    });
+
+    // Save to profile
+    $("#saveToProfile").addEventListener("click", ()=>{
+      state.saved.details = {...state.user};
+      // merge interests
+      const allInterests = new Set([...(state.saved.interests||[]), ...state.selectedInterests, ...state.derivedInterests]);
+      state.saved.interests = Array.from(allInterests).filter(Boolean);
+      persist();
+      toast("Saved to Profile");
+    });
+
+    // Restart
+    $("#restartFlow").addEventListener("click", ()=>{
+      state.selectedInterests = [];
+      state.testAnswers = {};
+      state.derivedInterests = [];
+      state.recommendations = [];
+      showSection("stepDetails");
+    });
+
+    // Profile actions
+    $("#editDetails").addEventListener("click", ()=>{
+      // preload details if saved
+      const d = state.saved.details || state.user;
+      $("#name").value = d.name || "";
+      $("#email").value = d.email || "";
+      $("#studying").value = d.studying || "";
+      $("#hobbies").value = d.hobbies || "";
+      $("#age").value = d.age || "";
+      $("#gender").value = d.gender || "";
+      showSection("stepDetails");
+    });
+    $("#clearProfile").addEventListener("click", ()=>{
+      state.saved = { details: state.saved.details, interests: [], careers: [] };
+      persist();
+      renderProfile();
+      toast("Profile items cleared");
+    });
+
+    // Chatbot (Demo)
+    const chatToggle = $("#chatToggle");
+    const chatWindow = $("#chatWindow");
+    $("#chatClose").addEventListener("click", ()=> chatWindow.classList.add("hidden"));
+    chatToggle.addEventListener("click", ()=>{
+      chatWindow.classList.toggle("hidden");
+      setTimeout(()=> { const box = $("#chatMessages"); box.scrollTop = box.scrollHeight; }, 50);
+    });
+    $("#chatSend").addEventListener("click", sendChat);
+    $("#chatInput").addEventListener("keydown", (e)=>{ if(e.key==="Enter"){ e.preventDefault(); sendChat(); } });
+    function sendChat(){
+      const input = $("#chatInput");
+      const text = input.value.trim();
+      if(!text) return;
+      addMsg(text, "user");
+      input.value = "";
+      setTimeout(()=> replyChat(text), 300);
+    }
+    function addMsg(t, from="bot"){
+      const wrap = $("#chatMessages");
+      const row = document.createElement("div");
+      row.className = `max-w-[85%] ${from==="user" ? "ml-auto" : ""}`;
+      row.innerHTML = `
+        <div class="px-3 py-2 rounded-lg ${from==="user" ? "bg-violet-600/80" : "bg-slate-800"} border border-white/10 text-sm">${t}</div>
+      `;
+      wrap.appendChild(row);
+      wrap.scrollTop = wrap.scrollHeight;
+    }
+    function replyChat(text){
+      // Simple keyword-based demo logic
+      const t = text.toLowerCase();
+      let reply = "I’m a demo helper. Ask about exams, skills, timelines, or a career name!";
+      if(t.includes("exam") || t.includes("jee") || t.includes("neet") || t.includes("gate")){
+        reply = "Common exams: JEE (engineering), NEET (medicine), GATE (postgrad engineering), CAT (MBA). Tell me a field and I’ll suggest likely exams.";
+      } else if(t.includes("skill") || t.includes("skills")){
+        reply = "Pick 3–5 skills to focus on. For tech: DSA, Git, DB, web frameworks. For design: research, wireframing, visuals, prototyping. For business: analytics, communication, marketing basics.";
+      } else if(t.includes("timeline") || t.includes("how long")){
+        reply = "Timelines vary: many UG degrees take ~3–4 years. Medical ~5.5 years, research paths longer. Ask me about a specific career.";
+      } else if(t.includes("software") || t.includes("engineer") || t.includes("developer")){
+        reply = "Software Engineer path: B.Tech/BE or B.Sc CS, strong coding + projects. Recruiters value internships and GitHub portfolios.";
+      } else if(t.includes("data science")){
+        reply = "Data Scientist path: Stats + Python + ML, projects with real datasets, and clear storytelling. Certifications help but portfolio matters most.";
+      } else if(t.includes("ux") || t.includes("designer")){
+        reply = "UX/UI path: learn research, wireframes, prototypes, and visual systems. Build 3–4 strong case studies in a portfolio.";
+      } else if(t.includes("doctor") || t.includes("mbbs")){
+        reply = "Doctor path: NEET-UG, MBBS (~5.5 yrs), optional PG (2–3 yrs). Focus on biology and consistent prep practice.";
+      } else if(t.includes("finance") || t.includes("analyst")){
+        reply = "Financial Analyst path: B.Com/BBA/Econ, strong Excel/BI, valuation basics, CFA is optional but valued.";
+      }
+      addMsg(reply, "bot");
+    }
+
+    // Load saved on start and prepare UI
+    function init(){
+      loadPersist();
+      renderProfile();
+      renderInterestChips();
+      buildTest();
+      // Prefill details from saved if any
+      if(state.saved.details){
+        const d = state.saved.details;
+        $("#name").value = d.name || "";
+        $("#email").value = d.email || "";
+        $("#studying").value = d.studying || "";
+        $("#hobbies").value = d.hobbies || "";
+        $("#age").value = d.age || "";
+        $("#gender").value = d.gender || "";
+      }
+      // Start at details
+      showSection("stepDetails");
+    }
+
+    init();
+  </script>
+
+  <!-- Disclosures -->
+  <footer class="mx-auto max-w-6xl px-4 pb-10 pt-4 text-xs text-slate-300/70">
+    Note: The chatbot is a demo that runs offline and provides general guidance, not professional advice.
+  </footer>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97f0c7d6818585c9',t:'MTc1Nzg2MjMwNy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
